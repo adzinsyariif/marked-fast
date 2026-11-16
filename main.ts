@@ -22,12 +22,24 @@ interface Case {
 const inputDir: string = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const outputDir: string = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-const raw: string = readFileSync(join(inputDir, 'cases.json'), 'utf8');
-const cases: Case[] = JSON.parse(raw) as Case[];
-
-const out: string[] = new Array<string>(cases.length);
-for (let i = 0; i < cases.length; i++) {
-  out[i] = parse(cases[i].markdown);
+function loadCases(dir: string): Case[] {
+  const raw: string = readFileSync(join(dir, 'cases.json'), 'utf8');
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error('cases.json must hold an array of cases');
+  }
+  return parsed as Case[];
 }
 
-writeFileSync(join(outputDir, 'html.json'), JSON.stringify(out));
+function renderAll(cases: Case[]): string[] {
+  const out: string[] = new Array<string>(cases.length);
+  for (let i = 0; i < cases.length; i++) {
+    out[i] = parse(cases[i].markdown);
+  }
+  return out;
+}
+
+const cases: Case[] = loadCases(inputDir);
+const html: string[] = renderAll(cases);
+
+writeFileSync(join(outputDir, 'html.json'), JSON.stringify(html));
